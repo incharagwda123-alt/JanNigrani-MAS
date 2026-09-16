@@ -54,15 +54,14 @@
 
 ---
 
-### Slide 3: Technical Approach & Architecture
+### Slide 3: Technical Approach (4-Agent MVP Architecture)
 
-* **5-Stage Pipeline:**
-  1. Data Ingestion & Quality: Standardizes eSAKSHI schema, flags missing dates/negative spend, resolves vendor names via RapidFuzz.
-  2. LangGraph Supervisor: Orchestrates parallel domain agents over an immutable Pydantic JSON state.
-  3. Parallel Domain Agents: Compliance Agent (GFR 2017 & SC/ST rules), Financial Agent (Isolation Forest), Progress Agent (milestone contradictions), Duplicate Agent (Sentence-BERT + 300m GIS), Geo-Network Agent (NetworkX cartels).
-  4. Anomaly Risk Aggregator: Calibrates score using $R = 0.25F + 0.20T + 0.20D + 0.15C + 0.10P + 0.10G$.
-  5. SHAP Explainability & Executive Dashboard: Decomposes exact percentage weights with direct document links.
-* **Tech Stack:** Python, FastAPI, PostgreSQL + PostGIS, Scikit-learn, GeoPandas, NetworkX, Next.js, Leaflet, Cytoscape.js.
+* **Architecture Pipeline (LangGraph Supervisor Orchestration):**
+  * **Agent 1: Data Ingestion & Quality Agent** — Ingests eSAKSHI & PFMS feeds, validates schemas (negative spend/missing dates), and performs RapidFuzz vendor entity resolution.
+  * **Agent 2: Financial & Progress Anomaly Agent** — Executes Isolation Forest for cost outliers, detects payment-progress mismatches (100% funds released vs 55% built), and verifies GFR 2017 & 15% SC / 7.5% ST quotas.
+  * **Agent 3: Geo-Spatial & Duplicate Work Agent** — Runs Sentence-BERT text embedding with 300m PostGIS spatial buffering to catch double-dipping, and NetworkX contractor cartel centrality.
+  * **Agent 4: Risk Scoring & Explainability Agent** — Aggregates multi-signal risk ($R = 0.25F + 0.20T + 0.20D + 0.15C + 0.10P + 0.10G$), decomposes SHAP factor contributions, and produces verifiable 1-page audit dossiers.
+* **Tech Stack:** Python, FastAPI, PostgreSQL + PostGIS, Scikit-learn, GeoPandas, NetworkX, Next.js, Leaflet.js.
 
 ---
 
@@ -120,5 +119,5 @@
   * Isolation Forest (Liu et al.) & SHAP (Lundberg & Lee): Mathematical basis for outlier detection & explainability.
 * **🎥 Live Working Prototype & Demo:**
   * **Live Web App:** `https://gleaming-malasada-dafc82.netlify.app`
-  * **GitHub Code:** `https://github.com/SentinelX3-0/JanNigrani-MAS`
+  * **GitHub Code:** `https://github.com/incharagwda123-alt/JanNigrani-MAS`
   * **Video Walkthrough:** `https://youtu.be/YOUR_DEMO_LINK`
