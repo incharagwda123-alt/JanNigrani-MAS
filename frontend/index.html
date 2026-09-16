@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JanNigrani MAS — MoSPI MPLADS Fund Intelligence System</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            gov: {
+              navy: '#090E17',
+              card: '#0F172A',
+              border: 'rgba(255, 255, 255, 0.08)',
+              saffron: '#FF9933',
+              green: '#138808',
+              blue: '#0284C7'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#090E17] text-slate-100 min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- National Tricolor Accent Bar -->
+  <div class="tricolor-bar w-full"></div>
+
+  <!-- Main Top Navigation Bar -->
+  <header class="glass-panel sticky top-0 z-30 border-b border-slate-800/80 px-6 py-3.5">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      
+      <!-- Brand & Ministry Meta -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500/20 via-sky-500/20 to-emerald-500/20 border border-slate-700 flex items-center justify-center font-heading font-black text-xl text-amber-400 shadow-inner">
+          JN
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+              JanNigrani <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-400 border border-sky-500/30 font-mono">MAS v2.4</span>
+            </h1>
+            <span class="text-xs text-slate-400 border-l border-slate-700 pl-2">SIH-26102</span>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Ministry of Statistics & Programme Implementation (MoSPI) &bull; Data Informatics & Innovation Division
+          </p>
+        </div>
+      </div>
+
+      <!-- 4-Tier Stakeholder View Switcher & Live Indicator -->
+      <div class="flex items-center gap-3 flex-wrap">
+        
+        <div class="flex flex-col items-end">
+          <label for="stakeholder-role-select" class="text-[10px] uppercase font-mono tracking-wider text-slate-400">
+            Active Statutory Lens
+          </label>
+          <div class="flex items-center gap-2 mt-0.5">
+            <select id="stakeholder-role-select" class="bg-slate-900 border border-slate-700 text-xs text-sky-400 font-semibold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer">
+              <option value="district" selected>🛡️ District Authority (DM / Collector)</option>
+              <option value="ministry">🏛️ MoSPI DIID (Apex Ministry)</option>
+              <option value="state">🏢 State Nodal Authority (Karnataka)</option>
+              <option value="mp">👤 Hon'ble MP (Constituency View)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="active-role-badge" class="px-3 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 bg-emerald-900/60 text-emerald-300 border-emerald-500">
+          <span class="w-2 h-2 rounded-full bg-current animate-pulse"></span> Operational Authority
+        </div>
+
+        <button onclick="switchTab('simulator')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 shadow-md transition flex items-center gap-1.5 font-heading">
+          <span>⚡ Live Jury Demo</span>
+        </button>
+
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Role Scope Sub-Banner -->
+  <div class="bg-slate-900/60 border-b border-slate-800 px-6 py-1.5 text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <span class="text-sky-400 font-semibold font-mono">CURRENT JURISDICTION:</span>
+        <span id="role-scope-description" class="text-slate-200">Bengaluru Urban District &bull; Operational Investigation Queue</span>
+      </div>
+      <div class="flex items-center gap-4 text-[11px] font-mono">
+        <span class="text-slate-400">Sync: <strong class="text-emerald-400 font-normal">Connected to MoSPI DigiGov</strong></span>
+        <span class="text-slate-400">Deterministic Engine: <strong class="text-sky-400 font-normal">Active (No Hallucinations)</strong></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-6 py-6 flex-1 w-full space-y-6">
+
+    <!-- KPI Metric Cards Grid -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+      
+      <div class="glass-card p-4 rounded-xl border border-slate-800">
+        <div class="text-[11px] uppercase font-mono text-slate-400">Works Monitored</div>
+        <div id="kpi-total-works" class="text-2xl font-black font-heading text-white mt-1">--</div>
+        <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+          <span class="text-emerald-400 font-mono">100%</span> digitized pipeline
+        </div>
+      </div>
+
+      <div class="glass-card p-4 rounded-xl border border-slate-800">
+        <div class="text-[11px] uppercase font-mono text-slate-400">Sanctioned Outlay</div>
+        <div id="kpi-total-sanctioned" class="text-2xl font-black font-heading text-sky-400 mt-1">--</div>
+        <div class="text-[10px] text-slate-400 mt-1">Active fiscal allocations</div>
+      </div>
+
+      <div class="glass-card p-4 rounded-xl border border-red-500/30 bg-red-950/10">
+        <div class="text-[11px] uppercase font-mono text-red-400 flex items-center gap-1">
+          <span class="w-2 h-2 rounded-full bg-red-400 animate-ping"></span> High Investigation Priority
+        </div>
+        <div id="kpi-high-priority" class="text-2xl font-black font-heading text-red-400 mt-1">--</div>
+        <div class="text-[10px] text-red-300 mt-1">Require physical verification</div>
+      </div>
+
+      <div class="glass-card p-4 rounded-xl border border-amber-500/30 bg-amber-950/10">
+        <div class="text-[11px] uppercase font-mono text-amber-400">Capital at Risk</div>
+        <div id="kpi-capital-risk" class="text-2xl font-black font-heading text-amber-400 mt-1">--</div>
+        <div class="text-[10px] text-amber-300 mt-1">Uncertified funds advanced</div>
+      </div>
+
+      <div class="glass-card p-4 rounded-xl border border-slate-800 col-span-2 md:col-span-1">
+        <div class="text-[11px] uppercase font-mono text-slate-400">Anomaly Detection Lag</div>
+        <div class="text-2xl font-black font-heading text-emerald-400 mt-1">&lt; 1.2s</div>
+        <div class="text-[10px] text-slate-400 mt-1">vs 45 days manual audit</div>
+      </div>
+
+    </div>
+
+    <!-- Navigation Tabs Bar -->
+    <div class="flex items-center justify-between border-b border-slate-800">
+      <div class="flex gap-2">
+        <button id="nav-btn-dashboard" onclick="switchTab('dashboard')" class="nav-tab-btn px-4 py-2.5 text-xs font-bold border-b-2 text-sky-400 border-sky-400 bg-slate-800/60 rounded-t-lg transition flex items-center gap-2">
+          <span>📊 Anomaly Priority Table</span>
+        </button>
+        <button id="nav-btn-gis-map" onclick="switchTab('gis-map')" class="nav-tab-btn px-4 py-2.5 text-xs font-bold border-b-2 text-slate-400 border-transparent hover:text-slate-200 transition flex items-center gap-2">
+          <span>🗺️ Geospatial Risk Map (Leaflet)</span>
+        </button>
+        <button id="nav-btn-cartel-graph" onclick="switchTab('cartel-graph')" class="nav-tab-btn px-4 py-2.5 text-xs font-bold border-b-2 text-slate-400 border-transparent hover:text-slate-200 transition flex items-center gap-2">
+          <span>🕸️ Contractor Cartel Network</span>
+        </button>
+        <button id="nav-btn-simulator" onclick="switchTab('simulator')" class="nav-tab-btn px-4 py-2.5 text-xs font-bold border-b-2 text-slate-400 border-transparent hover:text-slate-200 transition flex items-center gap-2">
+          <span>⚡ Live Pipeline Simulator</span>
+        </button>
+      </div>
+
+      <div class="text-xs text-slate-400 hidden md:block">
+        FOSS Stack: <span class="font-mono text-slate-300">React &bull; FastAPI &bull; PostgreSQL &bull; RapidFuzz</span>
+      </div>
+    </div>
+
+    <!-- TAB 1: Main Project Table View -->
+    <div id="tab-dashboard" class="tab-content space-y-4">
+      
+      <!-- Filter Bar -->
+      <div class="glass-card p-3.5 rounded-xl flex flex-col md:flex-row items-center justify-between gap-3">
+        <div class="flex items-center gap-3 w-full md:w-auto">
+          <div class="relative w-full md:w-72">
+            <input id="search-input" type="text" placeholder="Search by Project ID, work, contractor..." class="w-full bg-slate-900 border border-slate-700 text-xs rounded-lg pl-8 pr-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-sky-500">
+            <svg class="w-4 h-4 text-slate-500 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          </div>
+
+          <select id="priority-filter" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer">
+            <option value="all">All Risk Priorities</option>
+            <option value="high">High Priority (Score &ge; 80)</option>
+            <option value="medium">Medium Priority (Score 40-79)</option>
+            <option value="low">Low Risk / Verified (&lt; 40)</option>
+          </select>
+
+          <select id="sector-filter" class="bg-slate-900 border border-slate-700 text-xs text-slate-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-sky-500 cursor-pointer hidden lg:block">
+            <option value="all">All Sectors & Categories</option>
+            <option value="Roads, Pathways & Bridges">Roads & Bridges</option>
+            <option value="Community Assets & Skill Development">Community Halls</option>
+            <option value="Drinking Water & Public Health">Drinking Water</option>
+            <option value="Electricity & Solar Energy">Solar Energy</option>
+            <option value="Education & Child Welfare">Education</option>
+          </select>
+        </div>
+
+        <div class="text-xs text-slate-400 flex items-center gap-3">
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-red-400"></span> High Risk</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Medium Risk</span>
+          <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Verified Normal</span>
+        </div>
+      </div>
+
+      <!-- Anomaly Table -->
+      <div class="glass-panel rounded-xl overflow-hidden border border-slate-800">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 bg-slate-900/80 text-[11px] font-mono uppercase text-slate-400 tracking-wider">
+                <th class="py-3 px-4">Project ID</th>
+                <th class="py-3 px-4">Work Description & Scope</th>
+                <th class="py-3 px-4">Contractor & Implementing Agency</th>
+                <th class="py-3 px-4 text-right">Sanctioned / Spent</th>
+                <th class="py-3 px-4">Milestone Reconciliation</th>
+                <th class="py-3 px-4 text-center">Priority</th>
+                <th class="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="project-table-body">
+              <!-- Dynamically rendered via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TAB 2: Leaflet Geospatial GIS Map -->
+    <div id="tab-gis-map" class="tab-content hidden space-y-4">
+      <div class="glass-card p-4 rounded-xl flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+            <span>🗺️ Geospatial Anomaly Radar</span>
+            <span class="text-xs font-normal text-slate-400">(Leaflet.js + OpenStreetMap)</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Dashed red circles indicate <strong>500-meter proximity alert zones</strong> for suspected duplicate asset sanctioning.
+          </p>
+        </div>
+        <div class="flex items-center gap-3 text-xs font-mono">
+          <span class="px-2 py-1 rounded bg-red-500/20 text-red-400 border border-red-500/30">🔴 Red = High Risk (&ge;80)</span>
+          <span class="px-2 py-1 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">🟡 Amber = Med Risk</span>
+          <span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">🟢 Green = Verified</span>
+        </div>
+      </div>
+
+      <div class="glass-panel p-2 rounded-xl border border-slate-800 overflow-hidden shadow-2xl">
+        <div id="leaflet-map" class="w-full h-[540px] rounded-lg"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Contractor Cartel Network Graph -->
+    <div id="tab-cartel-graph" class="tab-content hidden space-y-4">
+      <div class="glass-card p-4 rounded-xl flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-white flex items-center gap-2">
+            <span>🕸️ Contractor-Agency Cartel Concentration Graph</span>
+            <span class="text-xs font-normal text-slate-400">(NetworkX Bipartite Topology)</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Interactive relationship canvas unmasking hidden vendor clustering, repeated sole-bid awards, and cross-agency concentration.
+          </p>
+        </div>
+        <div class="text-xs text-slate-400">
+          Click on any node to inspect bidding density and multi-work capturing patterns.
+        </div>
+      </div>
+
+      <div class="glass-panel p-4 rounded-xl border border-slate-800">
+        <div id="network-svg-container" class="w-full h-[520px] bg-slate-950/60 rounded-lg flex items-center justify-center overflow-hidden border border-slate-800">
+          <!-- Rendered via app.js initNetworkGraph() -->
+        </div>
+        
+        <div class="mt-4 grid grid-cols-3 gap-4 text-xs">
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="font-bold text-sky-400">Implementing Agencies:</span> Blue rectangles represent Municipal Corporation & Line Departments.
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="font-bold text-amber-400">Contractor Nodes:</span> Hexagons show contractors. Large red circle highlights <strong>CON-042 (88% Cartel Density)</strong>.
+          </div>
+          <div class="p-3 rounded-lg bg-slate-900 border border-slate-800">
+            <span class="font-bold text-red-400">Project Outliers:</span> Small circles show individual works, color-coded by anomaly severity.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Live Anomaly Pipeline Simulator (Judge Demo) -->
+    <div id="tab-simulator" class="tab-content hidden space-y-6">
+      
+      <div class="glass-card p-5 rounded-xl border border-sky-500/30">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <span>⚡ Live SIH Jury Ingestion Demo</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-sky-500/20 text-sky-400 font-mono">Real-Time Ingestion Console</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Simulate injecting a realistic, uncleaned MPLADS record and watch the 5-detector multi-agent engine execute sequentially without hallucination.
+            </p>
+          </div>
+          <button id="run-simulation-btn" onclick="runAnomalySimulation()" class="px-5 py-2.5 rounded-lg text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition shadow-lg flex items-center gap-2">
+            <span>▶ Run Live Anomaly Detection Pipeline</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- Input Payload Box -->
+        <div class="glass-panel p-5 rounded-xl border border-slate-800 space-y-3">
+          <div class="text-xs font-bold uppercase font-mono text-slate-300 flex items-center justify-between">
+            <span>Raw Ingestion Payload (MoSPI DigiGov Format)</span>
+            <span class="text-amber-400">Test Scenario: Ward 14 Community Center</span>
+          </div>
+          
+          <pre class="bg-slate-950 p-3.5 rounded-lg text-[11px] font-mono text-slate-300 border border-slate-800 overflow-x-auto leading-relaxed">
+{
+  "source_file": "mplads_bengaluru_q4.xlsx",
+  "project_id": "MPLADS-2026-KA-1042",
+  "description": "Construction of Community Hall and Skill Center, Ward 14",
+  "sanctioned_amount": 8500000,
+  "actual_expenditure": 8350000,
+  "progress_percent": 52,
+  "contractor": "ABC Infra Solutions Pvt Ltd",
+  "agency": "BBMP",
+  "lat": 12.9249, "lng": 77.5852,
+  "inspection_status": "Missing",
+  "completion_certificate": "Not Submitted"
+}</pre>
+          <div class="text-[11px] text-slate-400 italic">
+            *Notice: 98.2% funds disbursed, physical progress only 52%, duplicate facility exists 280m away.
+          </div>
+        </div>
+
+        <!-- Sequential Pipeline Execution Steps -->
+        <div class="glass-panel p-5 rounded-xl border border-slate-800 space-y-4">
+          <div class="text-xs font-bold uppercase font-mono text-slate-300">
+            Sequential Multi-Agent Execution Log
+          </div>
+          
+          <div id="simulator-steps" class="space-y-2.5">
+            <div class="text-xs text-slate-500 italic py-8 text-center">
+              Click "Run Live Anomaly Detection Pipeline" above to execute the pipeline live for the jury.
+            </div>
+          </div>
+
+          <div id="simulator-result" class="hidden pt-3 border-t border-slate-800 flex items-center justify-between">
+            <div>
+              <div class="text-xs font-bold text-red-400">Detection Output: Investigation Priority High (86/100)</div>
+              <div class="text-[11px] text-slate-400">Evidence bundle assembled for District Collector.</div>
+            </div>
+            <button onclick="window.triggerMapDrawer('MPLADS-2026-KA-1042')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 text-red-300 border border-red-500/40 hover:bg-red-500/30 transition">
+              Open Assembled Dossier &rarr;
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- THE KILLER FEATURE: SIGNATURE EVIDENCE BUNDLE DRAWER (Maalvigha & Mohan paired component) -->
+  <div id="drawer-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 hidden transition-opacity"></div>
+  
+  <aside id="evidence-drawer" class="drawer-closed fixed top-0 right-0 h-full w-full max-w-xl bg-slate-900 border-l border-slate-700 shadow-2xl z-50 overflow-y-auto flex flex-col transition-all">
+    
+    <!-- Drawer Header -->
+    <div class="p-5 border-b border-slate-800 bg-slate-950/80 sticky top-0 z-10 flex items-start justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-1">
+          <span id="drawer-project-id" class="font-mono text-xs font-bold text-sky-400 bg-sky-950/60 px-2 py-0.5 rounded border border-sky-800">
+            MPLADS-2026-KA-1042
+          </span>
+          <span id="drawer-priority-badge" class="px-2.5 py-0.5 rounded text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/40">
+            High Priority
+          </span>
+        </div>
+        <h3 id="drawer-project-title" class="text-base font-bold text-white leading-snug">
+          Work Description
+        </h3>
+        <p id="drawer-sector" class="text-xs text-slate-400 mt-0.5">Sector</p>
+      </div>
+      <button id="close-drawer-btn" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <!-- Drawer Body -->
+    <div class="p-5 space-y-6 flex-1">
+
+      <!-- Executive Risk Score Callout -->
+      <div class="p-4 rounded-xl bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900 border border-slate-700 flex items-center justify-between">
+        <div>
+          <div class="text-xs uppercase font-mono text-slate-400">Explainable Investigation Score</div>
+          <div id="drawer-risk-score" class="text-3xl font-black font-mono text-red-400 mt-0.5">86/100</div>
+          <div class="text-[11px] text-slate-400 mt-1 font-mono">
+            R = 0.35(Cost) + 0.30(Duplicate) + 0.35(Mismatch)
+          </div>
+        </div>
+        <div class="text-right">
+          <button onclick="printAuditDossier()" class="no-print px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-600 transition flex items-center gap-1.5 ml-auto">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            <span>Print Audit Dossier</span>
+          </button>
+          <div class="text-[10px] text-slate-500 mt-1">Audit-Ready Report</div>
+        </div>
+      </div>
+
+      <!-- Financial & Administrative Attributes -->
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+          <div class="text-slate-400">Sanctioned Outlay:</div>
+          <div id="drawer-sanctioned" class="font-bold text-slate-200 mt-0.5">--</div>
+        </div>
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+          <div class="text-slate-400">Actual Expenditure:</div>
+          <div id="drawer-expenditure" class="font-bold text-red-400 mt-0.5">--</div>
+        </div>
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+          <div class="text-slate-400">Physical Progress:</div>
+          <div id="drawer-progress" class="font-bold text-emerald-400 mt-0.5">--</div>
+        </div>
+        <div class="p-3 rounded-lg bg-slate-950 border border-slate-800">
+          <div class="text-slate-400">Fund Utilization:</div>
+          <div id="drawer-fund-util" class="font-bold text-amber-400 mt-0.5">--</div>
+        </div>
+      </div>
+
+      <!-- Stakeholder Attribution -->
+      <div class="p-3.5 rounded-lg bg-slate-950 border border-slate-800 text-xs space-y-1.5">
+        <div class="flex justify-between">
+          <span class="text-slate-400">Jurisdiction:</span>
+          <span id="drawer-location" class="font-medium text-slate-200">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Contractor:</span>
+          <span id="drawer-contractor" class="font-medium text-slate-200">--</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Implementing Agency:</span>
+          <span id="drawer-agency" class="font-medium text-slate-200">--</span>
+        </div>
+      </div>
+
+      <!-- Contributing Signals Breakdown (Exact Math & Rules) -->
+      <div>
+        <h4 class="text-xs font-bold uppercase font-mono text-slate-300 mb-2.5 flex items-center justify-between">
+          <span>Triggered Risk Detectors</span>
+          <span class="text-slate-500 font-normal">Multi-Signal Decomposition</span>
+        </h4>
+        <div id="drawer-signals-list" class="space-y-2">
+          <!-- Dynamically populated via app.js -->
+        </div>
+      </div>
+
+      <!-- Missing Statutory Documents -->
+      <div class="p-3.5 rounded-xl bg-red-950/20 border border-red-900/40">
+        <h4 class="text-xs font-bold text-red-300 uppercase font-mono mb-2 flex items-center gap-1.5">
+          <span>⚠️ Missing Compliance Verification</span>
+        </h4>
+        <ul id="drawer-missing-docs" class="space-y-1">
+          <!-- Dynamically populated -->
+        </ul>
+      </div>
+
+      <!-- Recommended Action Checklist for District Authority -->
+      <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800">
+        <h4 class="text-xs font-bold text-sky-400 uppercase font-mono mb-2 flex items-center gap-1.5">
+          <span>🛡️ Recommended District Collector Action</span>
+        </h4>
+        <ul id="drawer-actions-list" class="space-y-1.5">
+          <!-- Dynamically populated -->
+        </ul>
+      </div>
+
+      <!-- Mandatory SIH Maturity Disclaimer -->
+      <div class="p-3 rounded-lg bg-slate-950/80 border border-slate-800 text-center">
+        <p id="drawer-disclaimer" class="text-[11px] text-slate-400 italic">
+          "This alert indicates investigation priority and requires physical verification. It does not constitute proof of fraud."
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Drawer Footer Actions -->
+    <div class="p-4 border-t border-slate-800 bg-slate-950 sticky bottom-0 z-10 flex gap-3">
+      <button onclick="triggerSiteInspection()" class="flex-1 py-2.5 rounded-lg text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition flex items-center justify-center gap-1.5 shadow-md">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <span>Dispatch Site Inspection Order</span>
+      </button>
+      <button onclick="closeDrawer()" class="px-4 py-2.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+        Dismiss
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 py-4 px-6 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-2">
+      <div>Smart India Hackathon 2026 &bull; Problem Statement SIH26102 (MoSPI DIID)</div>
+      <div class="flex items-center gap-4">
+        <span>Team: Nikhil &bull; Jyothika &bull; Inchara &bull; Mohan &bull; Maalavigha &bull; Likitha</span>
+        <span class="font-mono text-slate-400">JanNigrani MAS Prototype</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- App Logic -->
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
