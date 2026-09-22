@@ -542,11 +542,11 @@ function runAnomalySimulation() {
   resultContainer.classList.add("hidden");
 
   const steps = [
-    { title: "1. Data Ingestion & Canonical Normalizer", desc: "Parsed raw Excel row. Normalized 14 aliases into unified 17-field MoSPI schema.", status: "ok" },
-    { title: "2. Cost Outlier Detector (Statistical Median)", desc: "Calculated deviation: ₹85,00,000 is +41% higher than district median (₹60,20,000).", status: "flag" },
-    { title: "3. Spatio-Temporal Duplicate Detector", desc: "Haversine distance = 280m from MPLADS-2025-KA-0891. RapidFuzz token similarity = 91%.", status: "flag" },
-    { title: "4. Payment-Progress Mismatch Engine", desc: "Expenditure = 98.2% (₹83.5L) vs Certified Progress = 52%. Divergence gap = 46.2%.", status: "flag" },
-    { title: "5. Risk Aggregator & Evidence Bundle Agent", desc: "Combined weighted score: 86/100 (HIGH). Generated audit dossier for District Magistrate.", status: "complete" }
+    { title: "1. Financial Agent (Isolation Forest)", desc: "Analyzed billing vs estimate: ₹83.5L paid (98.2%) vs ₹85L sanctioned. Flags single-bid pace.", status: "flag" },
+    { title: "2. Compliance Agent (Rule Engine)", desc: "Checked GFR 2017 & SC/ST rules: Missing mandatory MB entry, no completion certificate, photo stale (210 days).", status: "flag" },
+    { title: "3. Geo Agent (DBSCAN & Spatial GIS)", desc: "Geospatial coordinates verified: Lat 12.9249, Lng 77.5852. Proximity buffer of 280m flagged.", status: "flag" },
+    { title: "4. Duplicate Agent (RapidFuzz Semantic Matching)", desc: "91% token similarity with existing project MPLADS-2025-KA-0891. Flagged potential cross-scheme duplicate.", status: "flag" },
+    { title: "5. Peer Benchmarking Agent (Statistical Median)", desc: "Compared against district peers: Sanction is +41% above median cost (₹60.2L). 46.2% payment-progress gap.", status: "flag" }
   ];
 
   steps.forEach((s, idx) => {

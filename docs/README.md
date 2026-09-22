@@ -54,14 +54,20 @@
 
 ---
 
-### Slide 3: Technical Approach (4-Agent MVP Architecture)
+### Slide 3: Technical Approach (5-Agent Architecture)
 
-* **Architecture Pipeline (LangGraph Supervisor Orchestration):**
-  * **Agent 1: Data Ingestion & Quality Agent** — Ingests eSAKSHI & PFMS feeds, validates schemas (negative spend/missing dates), and performs RapidFuzz vendor entity resolution.
-  * **Agent 2: Financial & Progress Anomaly Agent** — Executes Isolation Forest for cost outliers, detects payment-progress mismatches (100% funds released vs 55% built), and verifies GFR 2017 & 15% SC / 7.5% ST quotas.
-  * **Agent 3: Geo-Spatial & Duplicate Work Agent** — Runs Sentence-BERT text embedding with 300m PostGIS spatial buffering to catch double-dipping, and NetworkX contractor cartel centrality.
-  * **Agent 4: Risk Scoring & Explainability Agent** — Aggregates multi-signal risk ($R = 0.25F + 0.20T + 0.20D + 0.15C + 0.10P + 0.10G$), decomposes SHAP factor contributions, and produces verifiable 1-page audit dossiers.
-* **Tech Stack:** Python, FastAPI, PostgreSQL + PostGIS, Scikit-learn, GeoPandas, NetworkX, Next.js, Leaflet.js.
+* **5-Stage Pipeline (Supervisor Orchestration):**
+  1. **Data Ingestion:** Fetch real-time project data from eSAKSHI portal using official APIs and extract key information (Sanctions, Expenditure, Work Progress).
+  2. **Data Quality Checks:** Ensure reliable and consistent data for accurate analysis (Validate schemas, clean duplicates, flag missing nulls).
+  3. **Parallel Multi-Agent Analysis (5 Specialized Domain Agents):**
+     * **1. Financial Agent (Isolation Forest):** Cost overruns, inflated estimates, single-bid tenders.
+     * **2. Compliance Agent (Rule Engine):** GFR 2017 rules, mandatory 15% SC / 7.5% ST quota checks.
+     * **3. Geo Agent (DBSCAN + GIS):** Location clustering, boundary validation, geographic inconsistencies.
+     * **4. Duplicate Agent (RapidFuzz + DBSCAN):** Duplicate project matching, 300m–500m proximity alerts.
+     * **5. Peer Benchmarking Agent (Statistical Medians):** District and sector cost benchmarking.
+  4. **Interactive Dashboard:** Interactive Maps (Leaflet.js), Relationship Graphs (cartels), Trend Charts, React/Next.js.
+  5. **Output (Actionable Intelligence):** 0–100 Risk Score (investigation priority), Role-Based Views, Flagged Cases, Never Auto-Labeled as Fraud.
+* **Tech Stack:** Python, FastAPI, PostgreSQL, React / Next.js, Tailwind CSS, Docker, Git.
 
 ---
 

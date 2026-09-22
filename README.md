@@ -23,38 +23,32 @@ The Members of Parliament Local Area Development Scheme (MPLADS) disburses over 
 
 ---
 
-## 🤖 2. The 4-Agent MVP System Architecture
+## 🤖 2. The 5-Agent Architecture (Matching SIH PPT Slides 3 & 4)
 
-For our buildable, production-ready MVP, the intelligence pipeline is structured around **4 Specialized Core Agents** coordinated by the LangGraph Supervisor:
+JanNigrani MAS employs a modular multi-agent pipeline composed of **5 Specialized Domain Agents** coordinated by the Supervisor Engine over an immutable shared state:
 
 ```mermaid
 flowchart TD
-    subgraph S1["1. DATA INGESTION &amp; ENTITY RESOLUTION AGENT"]
-        A["📡 eSAKSHI Data Ingestion"] --> B["Data Quality Sanitization<br/>(Flags negative spend &amp; missing IDs)"]
-        B --> C["RapidFuzz Entity Resolution<br/>(Normalizes disguised vendor names)"]
+    subgraph S1["PRE-PROCESSING: DATA INGESTION & QUALITY"]
+        A["📡 eSAKSHI & PFMS Ingestion"] --> B["Data Sanitization & RapidFuzz Entity Resolution"]
     end
 
-    subgraph S2["2. FINANCIAL &amp; PROGRESS ANOMALY AGENT"]
-        C --> D["Payment-Progress Mismatch<br/>(100% funds released vs 55% progress)"]
-        D --> E["Isolation Forest Cost Outlier<br/>(+40% above district median cost)"]
-        E --> F["Statutory Compliance Check<br/>(GFR 2017 &amp; 15% SC / 7.5% ST Quotas)"]
+    subgraph S2["5 PARALLEL DOMAIN AGENTS"]
+        B --> A1["💰 1. Financial Agent<br/>(Isolation Forest: cost overruns & single-bid tenders)"]
+        B --> A2["⚖️ 2. Compliance Agent<br/>(Rule Engine: GFR 2017 & 15% SC / 7.5% ST quotas)"]
+        B --> A3["🗺️ 3. Geo Agent<br/>(DBSCAN: location clustering & GIS proximity)"]
+        B --> A4["📑 4. Duplicate Agent<br/>(RapidFuzz: duplicate project matching & double-dipping)"]
+        B --> A5["📊 5. Peer Benchmarking Agent<br/>(Statistical Medians: district peer cost comparison)"]
     end
 
-    subgraph S3["3. GEO-SPATIAL &amp; DUPLICATE WORK AGENT"]
-        F --> G["Sentence Transformers Embeddings<br/>(Semantic project scope similarity)"]
-        G --> H["GeoPandas 300m Radius Buffer<br/>(Cross-scheme duplicate funding)"]
-        H --> I["NetworkX Bipartite Graph<br/>(Contractor cartel &amp; tender concentration)"]
+    subgraph S3["SUPERVISOR RISK SCORING & EXPLAINABILITY"]
+        A1 & A2 & A3 & A4 & A5 --> J["Supervisor Risk Aggregator<br/>R = Financial + Compliance + Geo + Duplicate + Benchmarking"]
+        J --> K["SHAP Factor Decomposition & 1-Page Evidence Dossier"]
     end
 
-    subgraph S4["4. RISK SCORING &amp; EXPLAINABILITY AGENT (SHAP)"]
-        I --> J["Calibrated Risk Aggregator<br/>R = 0.25F + 0.20T + 0.20D + 0.15C + 0.10P + 0.10G"]
-        J --> K["SHAP Factor Decomposition<br/>(+24%, +21%, +18%, +14%, +9%)"]
-        K --> L["1-Page Verifiable Evidence Dossier<br/>(Sanction PDF, PFMS Log, EXIF Geotag)"]
-    end
-
-    subgraph S5["5. ACTIONABLE HUMAN REVIEW"]
-        L --> M["🖥️ District Collector Triage Queue"]
-        M --> N["🧑‍💼 Targeted Physical Verification"]
+    subgraph S4["ACTIONABLE OUTPUT"]
+        K --> M["🖥️ District Authority & Ministry Triage Queue"]
+        M --> N["🧑‍💼 Targeted Physical Verification (Assist, Don't Decide)"]
     end
 
     classDef blueBox fill:#0f172a,stroke:#38bdf8,stroke-width:1.5px,color:#fff;
@@ -68,28 +62,28 @@ flowchart TD
     class J,K,L greenBox;
 ```
 
-### Breakdown of the 4 MVP Agents:
+#### Breakdown of the 5 Domain Agents (Matching SIH PPT Slides 3 & 4):
 
-1. **Agent 1: Data Ingestion & Quality Agent**
-   * Standardizes eSAKSHI columns to a 17-field canonical schema.
-   * Performs basic data sanity checks (*separating bad formatting from fraud*).
-   * RapidFuzz entity matching unmasks disguised contractors (*"ABC Infra"* vs *"ABC Infrastructure"*).
+1. **💰 Financial Agent (Isolation Forest)**
+   * Detects abnormal cost overruns and inflated estimates against historical distributions.
+   * Identifies single-bid tenders and sudden payment pace surges ahead of milestones.
 
-2. **Agent 2: Financial & Progress Anomaly Agent**
-   * Flags payment-progress contradictions (e.g., 100% money released while physical progress sits at 55%).
-   * Uses **Isolation Forest** to catch abnormal cost estimates per unit work against district medians.
-   * Enforces mandatory GFR 2017 rules and statutory **15% SC / 7.5% ST** quota compliance.
+2. **⚖️ Compliance Agent (Rule Engine)**
+   * Validates General Financial Rules (GFR 2017) procurement protocols.
+   * Enforces mandatory statutory allocations: **15% Scheduled Caste (SC)** and **7.5% Scheduled Tribe (ST)** quotas.
+   * Flags missing Executive Engineer Measurement Book (MB) sign-offs and stale geotagged photos (>180 days).
 
-3. **Agent 3: Geo-Spatial & Duplicate Work Agent**
-   * Uses **Sentence Transformers** to identify identical scopes disguised by varied wording.
-   * Executes **GeoPandas 300-meter radius spatial buffering** to stop cross-scheme double-dipping.
-   * Employs **NetworkX** to map contractor-agency collusion rings.
+3. **🗺️ Geo Agent (DBSCAN & Spatial GIS)**
+   * Analyzes project latitude/longitude coordinates and identifies geographic inconsistencies.
+   * Executes location clustering (DBSCAN) to flag contractor territory monopolies across municipal agencies.
 
-4. **Agent 4: Risk Scoring & Explainability Agent (SHAP)**
-   * Synthesizes the calibrated composite formula:
-     $$R = 0.25F + 0.20T + 0.20D + 0.15C + 0.10P + 0.10G$$
-   * Generates SHAP mathematical feature weights (`+24%`, `+21%`, `+18%`).
-   * Bundles clickable source links (Sanction Order, PFMS Disbursal, EXIF Geotag) for human verification.
+4. **📑 Duplicate Agent (RapidFuzz Semantic Matching)**
+   * Employs RapidFuzz token sorting and Sentence-BERT semantic similarity to detect duplicate work descriptions.
+   * Enforces a **300m–500m proximity buffer** to prevent cross-scheme double-dipping (e.g. claiming MPLADS for roads built under PMGSY).
+
+5. **📊 Peer Benchmarking Agent (Statistical Medians)**
+   * Benchmarks individual work costs against district and sector-level historical medians.
+   * Detects severe payment-progress divergences (e.g., 98% funds disbursed vs 52% physical progress).
 
 ---
 
@@ -108,7 +102,7 @@ JanNigrani-MAS/
 │   ├── styles.css                 # Glassmorphism dark-mode government UI
 │   └── package.json               # Frontend dependencies & scripts
 │
-├── backend/                       # Python 4-Agent MVP & Machine Learning Layer
+├── backend/                       # Python 5-Agent Architecture & Machine Learning Layer
 │   ├── main.py                    # FastAPI asynchronous REST endpoints
 │   ├── Dockerfile                 # Container image specification
 │   ├── requirements.txt           # Python dependencies
@@ -117,8 +111,8 @@ JanNigrani-MAS/
 │   │   ├── project.py             # 17-field canonical eSAKSHI schema
 │   │   └── state.py               # Immutable LangGraph Shared Project State
 │   │
-│   └── agents/                    # The 4 Core MVP Agents
-│       ├── supervisor.py          # 4-Agent MVP Pipeline Coordinator
+│   └── agents/                    # The 5 Specialized Domain Agents
+│       ├── supervisor.py          # 5-Agent Pipeline Coordinator
 │       └── __init__.py
 │
 └── docs/                          # SIH Presentation Deck & Architectural Guides

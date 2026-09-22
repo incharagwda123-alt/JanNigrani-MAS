@@ -31,24 +31,29 @@ window.JANNIGRANI_DATA = [
     priority: "High",
     contributing_signals: [
       {
-        signal: "Payment-Progress Mismatch",
-        contribution: 35,
-        reason: "98.2% of funds disbursed (₹83.5L) while physical progress is stalled at 52% (46.2% gap)."
+        signal: "Financial Agent — Payment-Progress Mismatch",
+        contribution: 25,
+        reason: "98.2% of funds disbursed (₹83.5L) while physical progress is stalled at 52% (46.2% gap) with rapid release pattern."
       },
       {
-        signal: "Duplicate Scope Alert",
-        contribution: 27,
-        reason: "91% textual & purpose similarity with project MPLADS-2025-KA-0891 located 280m away."
+        signal: "Compliance Agent — Statutory Gaps (GFR 2017)",
+        contribution: 18,
+        reason: "Missing mandatory site inspection log, no completion certificate, and site photo stale (210 days ago)."
       },
       {
-        signal: "Cost Outlier Anomaly",
-        contribution: 24,
-        reason: "Estimated cost of ₹85L is 41% above the district median (₹60.2L) for Grade-II community halls."
+        signal: "Geo Agent — 280m Proximity Alert",
+        contribution: 16,
+        reason: "Geospatial coordinates (12.9249, 77.5852) fall within 280m radius of another sanctioned municipal facility."
       },
       {
-        signal: "Contractor Concentration",
-        contribution: 14,
-        reason: "Contractor ABC Infra holds 11 active works across 3 agencies in this district."
+        signal: "Duplicate Agent — 91% RapidFuzz Scope Overlap",
+        contribution: 15,
+        reason: "91% token similarity with project MPLADS-2025-KA-0891 (Ward 14), indicating potential cross-scheme double funding."
+      },
+      {
+        signal: "Peer Benchmarking Agent — +41% Cost Outlier",
+        contribution: 12,
+        reason: "Estimated cost of ₹85L is 41% above district peer median (₹60.2L) for Grade-II community halls."
       }
     ],
     evidence_bundle: {
