@@ -5,7 +5,8 @@
 **Department:** Data Informatics & Innovation Division (DIID)  
 **Theme:** Smart Automation | **Category:** Software  
 **Team Name:** SentinelX3.0  
-**Live Working Prototype:** `https://gleaming-malasada-dafc82.netlify.app`
+* **Live Working Prototype (Vercel):** `https://frontend-theta-six-83.vercel.app`  
+* **Alternative Mirror (Netlify):** `https://gleaming-malasada-dafc82.netlify.app`
 
 ---
 
@@ -124,6 +125,7 @@
   * Autonomous Financial AI (IJARIIT / IJCNLP, 2025): `https://tinyurl.com/ijariit-ai-agents` (Causal transaction audits)
   * Isolation Forest (Liu et al.) & SHAP (Lundberg & Lee): Mathematical basis for outlier detection & explainability.
 * **🎥 Live Working Prototype & Demo:**
-  * **Live Web App:** `https://gleaming-malasada-dafc82.netlify.app`
+  * **Live Web App (Vercel):** `https://frontend-theta-six-83.vercel.app`
+  * **Alternative Mirror (Netlify):** `https://gleaming-malasada-dafc82.netlify.app`
   * **GitHub Code:** `https://github.com/incharagwda123-alt/JanNigrani-MAS`
   * **Video Walkthrough:** `https://youtu.be/YOUR_DEMO_LINK`

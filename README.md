@@ -5,7 +5,8 @@
 **Theme:** Smart Automation | **Category:** Software  
 **Team:** **SentinelX3.0**  
 
-🌐 **Live Working MVP Prototype:** [https://gleaming-malasada-dafc82.netlify.app](https://gleaming-malasada-dafc82.netlify.app)  
+🌐 **Live Working Prototype (Vercel):** [https://frontend-theta-six-83.vercel.app](https://frontend-theta-six-83.vercel.app)  
+🌐 **Alternative Mirror (Netlify):** [https://gleaming-malasada-dafc82.netlify.app](https://gleaming-malasada-dafc82.netlify.app)  
 📂 **Target Repository:** [https://github.com/incharagwda123-alt/JanNigrani-MAS](https://github.com/incharagwda123-alt/JanNigrani-MAS)
 
 ---
