@@ -1,7 +1,16 @@
 import math
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+
+try:
+    from langgraph.graph import StateGraph, END
+    LANGGRAPH_AVAILABLE = True
+except ImportError:
+    LANGGRAPH_AVAILABLE = False
+    StateGraph, END = None, None
+
 from schemas.project import ProjectRecord
 from schemas.state import SharedProjectState, AgentSignal, DuplicateMatch
+
 
 class DataIngestionQualityStage:
     """Pre-processing Stage: Ingests eSAKSHI & PFMS data, checks schemas, resolves entities."""
@@ -96,12 +105,12 @@ class ComplianceAgent:
 
 
 class GeoAgent:
-    """Agent 3: Location clustering, geographic inconsistencies, 300m-500m proximity radar."""
+    """Agent 3: Location clustering, geographic inconsistencies, 300m-500m proximity radar (DBSCAN)."""
     def run(self, state: SharedProjectState, existing: List[ProjectRecord]):
         p = state.project
         cid = p.contractor_id or p.contractor_name
         
-        # Contractor location clustering (DBSCAN / Cartel Concentration)
+        # Contractor location clustering (DBSCAN / Cartel Centrality)
         contractor_count = sum(1 for o in existing if (o.contractor_id == cid or o.contractor_name == p.contractor_name))
         if contractor_count >= 5:
             state.g_score = 80.0
@@ -124,7 +133,7 @@ class GeoAgent:
 
 
 class DuplicateAgent:
-    """Agent 4: Duplicate project matching (DBSCAN + RapidFuzz semantic similarity)."""
+    """Agent 4: Duplicate project matching (RapidFuzz token similarity + 300m spatial buffer)."""
     def run(self, state: SharedProjectState, existing: List[ProjectRecord]):
         p = state.project
         max_similarity = 0.0
@@ -180,7 +189,11 @@ class PeerBenchmarkingAgent:
     def run(self, state: SharedProjectState, existing: List[ProjectRecord]):
         p = state.project
         # Benchmark against peers in same district & sector
-        peer_costs = [o.sanctioned_amount for o in existing if o.district == p.district and o.sector == p.sector and o.project_id != p.project_id]
+        p_dist = getattr(p, 'district', getattr(p.location, 'district', ''))
+        peer_costs = [
+            o.sanctioned_amount for o in existing 
+            if getattr(o, 'district', getattr(o.location, 'district', '')) == p_dist and o.project_id != p.project_id
+        ]
         if peer_costs:
             peer_costs.sort()
             median_cost = peer_costs[len(peer_costs) // 2]
@@ -196,7 +209,7 @@ class PeerBenchmarkingAgent:
 
 class SupervisorAgent:
     """
-    Supervisor Agent coordinating the 5-Agent Architecture (Matching SIH PPT Slides 3 & 4):
+    Supervisor Agent coordinating the 5-Agent Architecture via LangGraph StateGraph:
     1. FinancialAgent (Isolation Forest)
     2. ComplianceAgent (Rule Engine)
     3. GeoAgent (Spatial GIS & DBSCAN)
@@ -204,30 +217,140 @@ class SupervisorAgent:
     5. PeerBenchmarkingAgent (Statistical Median)
     """
     def __init__(self):
-        self.version = "2.5.0-SIH"
+        self.version = "2.6.0-LangGraph-SIH"
         self.ingestion_stage = DataIngestionQualityStage()
         self.financial_agent = FinancialAgent()
         self.compliance_agent = ComplianceAgent()
         self.geo_agent = GeoAgent()
         self.duplicate_agent = DuplicateAgent()
         self.peer_agent = PeerBenchmarkingAgent()
+        
+        # Build LangGraph StateGraph workflow if available
+        self.workflow = self._build_langgraph_workflow() if LANGGRAPH_AVAILABLE else None
+
+    def _build_langgraph_workflow(self):
+        """Constructs the official LangGraph StateGraph coordinating all 5 agent nodes."""
+        builder = StateGraph(SharedProjectState)
+
+        # Agent Node Definitions
+        def node_ingestion(state: SharedProjectState) -> Dict[str, Any]:
+            self.ingestion_stage.run(state)
+            return {"data_quality_flags": state.data_quality_flags, "project": state.project}
+
+        def node_financial(state: SharedProjectState) -> Dict[str, Any]:
+            self.financial_agent.run(state)
+            return {
+                "f_score": state.f_score,
+                "p_score": state.p_score,
+                "t_score": state.t_score,
+                "financial_signals": state.financial_signals,
+                "contributing_signals": state.contributing_signals
+            }
+
+        def node_compliance(state: SharedProjectState) -> Dict[str, Any]:
+            self.compliance_agent.run(state)
+            return {
+                "c_score": state.c_score,
+                "compliance_flags": state.compliance_flags,
+                "contributing_signals": state.contributing_signals
+            }
+
+        def node_geo(state: SharedProjectState) -> Dict[str, Any]:
+            self.geo_agent.run(state, self._active_existing_projects)
+            return {
+                "g_score": state.g_score,
+                "network_signals": state.network_signals,
+                "contributing_signals": state.contributing_signals
+            }
+
+        def node_duplicate(state: SharedProjectState) -> Dict[str, Any]:
+            self.duplicate_agent.run(state, self._active_existing_projects)
+            return {
+                "d_score": state.d_score,
+                "duplicate_matches": state.duplicate_matches,
+                "contributing_signals": state.contributing_signals
+            }
+
+        def node_peer(state: SharedProjectState) -> Dict[str, Any]:
+            self.peer_agent.run(state, self._active_existing_projects)
+            return {
+                "financial_signals": state.financial_signals,
+                "contributing_signals": state.contributing_signals
+            }
+
+        def node_supervisor_synthesis(state: SharedProjectState) -> Dict[str, Any]:
+            # Calibrated composite risk formula matching SIH Presentation Deck:
+            # R = 0.25F + 0.20C + 0.15G + 0.20D + 0.10P + 0.10T
+            r = (
+                0.25 * state.f_score +
+                0.20 * state.c_score +
+                0.15 * state.g_score +
+                0.20 * state.d_score +
+                0.10 * state.p_score +
+                0.10 * state.t_score
+            )
+            composite_score = round(min(max(r, 0.0), 100.0), 1)
+            priority = "HIGH" if composite_score >= 70.0 else "MEDIUM" if composite_score >= 40.0 else "LOW"
+
+            recommended = [
+                "1. Conduct targeted on-site physical inspection before final disbursal.",
+                "2. Reconcile physical Measurement Book (MB) entries with PFMS transactions.",
+                "3. Verify spatial boundaries against Municipal/PWD registers to prevent cross-scheme duplicate funding."
+            ]
+            bundle = [
+                f"Sanction Order #{state.project.project_id}-SO",
+                "PFMS Financial Disbursal Log",
+                "EXIF Mobile Geotag Validation Report"
+            ]
+            return {
+                "composite_risk_score": composite_score,
+                "priority_tier": priority,
+                "recommended_actions": recommended,
+                "evidence_bundle": bundle
+            }
+
+        # Add Nodes to Graph
+        builder.add_node("data_ingestion_agent", node_ingestion)
+        builder.add_node("financial_agent", node_financial)
+        builder.add_node("compliance_agent", node_compliance)
+        builder.add_node("geo_agent", node_geo)
+        builder.add_node("duplicate_agent", node_duplicate)
+        builder.add_node("peer_benchmarking_agent", node_peer)
+        builder.add_node("supervisor_evaluator", node_supervisor_synthesis)
+
+        # Wire Directed Edges: Sequential & Deterministic Multi-Agent State Flow
+        builder.set_entry_point("data_ingestion_agent")
+        builder.add_edge("data_ingestion_agent", "financial_agent")
+        builder.add_edge("financial_agent", "compliance_agent")
+        builder.add_edge("compliance_agent", "geo_agent")
+        builder.add_edge("geo_agent", "duplicate_agent")
+        builder.add_edge("duplicate_agent", "peer_benchmarking_agent")
+        builder.add_edge("peer_benchmarking_agent", "supervisor_evaluator")
+        builder.add_edge("supervisor_evaluator", END)
+
+        return builder.compile()
 
     def run_pipeline(self, project: ProjectRecord, existing_projects: List[ProjectRecord] = None) -> SharedProjectState:
         state = SharedProjectState(project=project)
-        existing = existing_projects or []
+        self._active_existing_projects = existing_projects or []
         
-        # Pre-processing
+        # Execute via official LangGraph StateGraph if loaded
+        if self.workflow is not None:
+            output_dict = self.workflow.invoke(state)
+            if isinstance(output_dict, dict):
+                for k, v in output_dict.items():
+                    if hasattr(state, k):
+                        setattr(state, k, v)
+            return state
+
+        # Direct Fallback Runner (guarantees zero-failure on any minimal Python runtime)
         self.ingestion_stage.run(state)
-        
-        # Parallel / Domain Agent Execution
         self.financial_agent.run(state)
         self.compliance_agent.run(state)
-        self.geo_agent.run(state, existing)
-        self.duplicate_agent.run(state, existing)
-        self.peer_agent.run(state, existing)
+        self.geo_agent.run(state, self._active_existing_projects)
+        self.duplicate_agent.run(state, self._active_existing_projects)
+        self.peer_agent.run(state, self._active_existing_projects)
         
-        # Synthesis & Calibrated 0-100 Score
-        # R = 0.25F + 0.20C + 0.15G + 0.20D + 0.10P + 0.10T
         r = (
             0.25 * state.f_score +
             0.20 * state.c_score +
@@ -237,14 +360,7 @@ class SupervisorAgent:
             0.10 * state.t_score
         )
         state.composite_risk_score = round(min(max(r, 0.0), 100.0), 1)
-
-        if state.composite_risk_score >= 70.0:
-            state.priority_tier = "HIGH"
-        elif state.composite_risk_score >= 40.0:
-            state.priority_tier = "MEDIUM"
-        else:
-            state.priority_tier = "LOW"
-
+        state.priority_tier = "HIGH" if state.composite_risk_score >= 70.0 else "MEDIUM" if state.composite_risk_score >= 40.0 else "LOW"
         state.recommended_actions = [
             "1. Conduct targeted on-site physical inspection before final disbursal.",
             "2. Reconcile physical Measurement Book (MB) entries with PFMS transactions.",
@@ -255,5 +371,4 @@ class SupervisorAgent:
             "PFMS Financial Disbursal Log",
             "EXIF Mobile Geotag Validation Report"
         ]
-
         return state
