@@ -7,7 +7,9 @@
 
 🌐 **Live Working Prototype (Vercel):** [https://frontend-theta-six-83.vercel.app](https://frontend-theta-six-83.vercel.app)  
 🌐 **Alternative Mirror (Netlify):** [https://gleaming-malasada-dafc82.netlify.app](https://gleaming-malasada-dafc82.netlify.app)  
-📂 **Target Repository:** [https://github.com/incharagwda123-alt/JanNigrani-MAS](https://github.com/incharagwda123-alt/JanNigrani-MAS)
+📂 **Target Repository:** [https://github.com/incharagwda123-alt/JanNigrani-MAS](https://github.com/incharagwda123-alt/JanNigrani-MAS)  
+📱 **Scan to Open Prototype:**  
+<img src="docs/vercel_prototype_qr.png" alt="Scan to Open JanNigrani Prototype" width="180"/>
 
 ---
 
